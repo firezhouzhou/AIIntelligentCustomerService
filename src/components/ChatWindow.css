@@ -1,0 +1,30 @@
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  color: var(--error-color);
+  font-size: 14px;
+}
+
+.error-icon {
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .chat-window {
+    border-radius: 0;
+  }
+}
