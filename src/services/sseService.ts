@@ -58,46 +58,63 @@ export class SSEChatService {
 
       const decoder = new TextDecoder();
       let sessionId = request.sessionId || '';
+      
+      // 缓冲区：用于存储跨chunk的不完整数据
+      let buffer = '';
 
       // 读取流数据
       while (true) {
         const { done, value } = await reader.read();
         
         if (done) {
+          // 处理缓冲区中剩余的数据
+          if (buffer.trim()) {
+            this.processBuffer(buffer, (data) => {
+              sessionId = data.sessionId || sessionId;
+              if (data.type === 'text' && data.content) {
+                onMessage(data.content);
+              }
+            });
+          }
           onComplete(sessionId);
           break;
         }
 
-        // 解码数据
+        // 解码数据并追加到缓冲区
         const chunk = decoder.decode(value, { stream: true });
-        
-        // 解析SSE数据
-        // SSE格式: data: {...}\n\n
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data:')) {
-            try {
-              const jsonStr = line.slice(5).trim();
-              if (jsonStr) {
-                const data: ChatResponse = JSON.parse(jsonStr);
-                sessionId = data.sessionId;
-                
-                if (data.type === 'text' && data.content) {
-                  onMessage(data.content);
-                } else if (data.type === 'done') {
-                  onComplete(sessionId);
-                  return;
-                } else if (data.type === 'error') {
-                  onError(new Error(data.content));
-                  return;
-                }
-              }
-            } catch (e) {
-              // 忽略解析错误，可能是不完整的数据块
-              console.debug('Parse error:', e);
+        buffer += chunk;
+
+        // 处理完整的SSE事件
+        // SSE事件以 \n\n 或 \r\n\r\n 分隔
+        const eventEndPattern = /\r?\n\r?\n/;
+        let eventEnd = buffer.search(eventEndPattern);
+
+        while (eventEnd !== -1) {
+          // 提取一个完整的事件
+          const eventData = buffer.substring(0, eventEnd);
+          // 找到实际的分隔符长度
+          const match = buffer.match(eventEndPattern);
+          const separatorLength = match ? match[0].length : 2;
+          buffer = buffer.substring(eventEnd + separatorLength);
+
+          // 解析事件
+          const result = this.parseSSEEvent(eventData);
+          if (result) {
+            sessionId = result.sessionId || sessionId;
+            
+            if (result.type === 'text' && result.content) {
+              onMessage(result.content);
+            } else if (result.type === 'done') {
+              onComplete(sessionId);
+              return;
+            } else if (result.type === 'error') {
+              onError(new Error(result.content));
+              return;
             }
           }
+
+          // 继续查找下一个事件
+          eventEnd = buffer.search(eventEndPattern);
         }
       }
     } catch (error) {
@@ -106,6 +123,61 @@ export class SSEChatService {
         return;
       }
       onError(error as Error);
+    }
+  }
+
+  /**
+   * 解析单个SSE事件
+   */
+  private parseSSEEvent(eventStr: string): ChatResponse | null {
+    const lines = eventStr.split(/\r?\n/);
+    let data = '';
+    
+    for (const line of lines) {
+      // SSE格式: field: value
+      // 我们主要关注 data 字段
+      if (line.startsWith('data:')) {
+        // data字段可能有多行，需要拼接
+        const value = line.slice(5); // 移除 "data:" 前缀
+        // 不要trim，保留原始空格，只移除开头的一个空格（如果有）
+        data += (value.startsWith(' ') ? value.slice(1) : value);
+      } else if (line.startsWith('data :')) {
+        // 处理 "data :" 格式（冒号前有空格）
+        const value = line.slice(6);
+        data += (value.startsWith(' ') ? value.slice(1) : value);
+      }
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(data) as ChatResponse;
+    } catch (e) {
+      console.debug('JSON parse error:', e, 'Data:', data);
+      return null;
+    }
+  }
+
+  /**
+   * 处理缓冲区中的数据
+   */
+  private processBuffer(buffer: string, callback: (data: ChatResponse) => void): void {
+    const lines = buffer.split(/\r?\n/);
+    
+    for (const line of lines) {
+      if (line.startsWith('data:')) {
+        const jsonStr = line.slice(5).trim();
+        if (jsonStr) {
+          try {
+            const data = JSON.parse(jsonStr) as ChatResponse;
+            callback(data);
+          } catch (e) {
+            console.debug('Buffer parse error:', e);
+          }
+        }
+      }
     }
   }
 

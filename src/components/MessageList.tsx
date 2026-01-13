@@ -1,8 +1,13 @@
 /**
- * 消息列表组件
+ * 消息列表组件 - 支持Markdown渲染
  */
 
 import { useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Message } from '../types/chat';
 import './MessageList.css';
 
@@ -74,7 +79,19 @@ function MessageItem({ message }: MessageItemProps) {
       </div>
       <div className="message-content">
         <div className="message-bubble">
-          {message.content || (message.status === 'sending' ? '' : '...')}
+          {isUser ? (
+            // 用户消息直接显示文本
+            message.content || ''
+          ) : (
+            // AI消息使用Markdown渲染
+            <>
+              {message.content ? (
+                <MarkdownContent content={message.content} />
+              ) : (
+                message.status === 'sending' ? '' : '...'
+              )}
+            </>
+          )}
           {message.status === 'sending' && <span className="cursor-blink">|</span>}
         </div>
         <div className="message-time">
@@ -83,6 +100,65 @@ function MessageItem({ message }: MessageItemProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Markdown内容渲染组件
+ */
+interface MarkdownContentProps {
+  content: string;
+}
+
+function MarkdownContent({ content }: MarkdownContentProps) {
+  return (
+    <ReactMarkdown
+      className="markdown-body"
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
+      components={{
+        // 代码块渲染
+        code({ node, className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || '');
+          const isInline = !match && !className;
+          
+          return isInline ? (
+            <code className="inline-code" {...props}>
+              {children}
+            </code>
+          ) : (
+            <SyntaxHighlighter
+              style={oneDark}
+              language={match ? match[1] : 'text'}
+              PreTag="div"
+              className="code-block"
+              showLineNumbers={true}
+              wrapLines={true}
+            >
+              {String(children).replace(/\n$/, '')}
+            </SyntaxHighlighter>
+          );
+        },
+        // 链接在新窗口打开
+        a({ href, children, ...props }) {
+          return (
+            <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+              {children}
+            </a>
+          );
+        },
+        // 表格样式
+        table({ children, ...props }) {
+          return (
+            <div className="table-wrapper">
+              <table {...props}>{children}</table>
+            </div>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>
   );
 }
 
