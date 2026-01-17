@@ -8,7 +8,7 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: var(--bg-primary);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -20,6 +20,164 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* 模型选择器 - 内联样式 */
+.model-selector-inline {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.model-trigger-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.model-trigger-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.model-trigger-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.model-trigger-btn .model-icon {
+  font-size: 16px;
+}
+
+.model-trigger-btn .model-name {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-trigger-btn .arrow {
+  transition: transform var(--transition-fast);
+}
+
+.model-trigger-btn .arrow.open {
+  transform: rotate(180deg);
+}
+
+/* 模型下拉菜单 */
+.model-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  z-index: 1000;
+  animation: menuSlideUp 0.2s ease;
+}
+
+@keyframes menuSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.model-menu-header {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.model-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.model-menu-item:last-child {
+  border-bottom: none;
+}
+
+.model-menu-item:hover {
+  background: var(--bg-secondary);
+}
+
+.model-menu-item.selected {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.model-menu-item .model-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.model-menu-item .model-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.model-menu-item .model-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.model-menu-item .model-desc {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.model-menu-item .default-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+.model-menu-item .check-mark {
+  color: var(--primary-color);
+  font-weight: bold;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* 输入框 */
 .message-input {
   flex: 1;
   border: none;
@@ -31,6 +189,7 @@
   outline: none;
   min-height: 24px;
   max-height: 120px;
+  padding: 6px 0;
 }
 
 .message-input::placeholder {
@@ -41,10 +200,12 @@
   opacity: 0.6;
 }
 
+/* 操作按钮 */
 .input-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .send-btn,
@@ -86,6 +247,7 @@
   transform: scale(1.05);
 }
 
+/* 提示信息 */
 .input-tips {
   margin-top: 8px;
   font-size: 12px;
@@ -93,28 +255,41 @@
   text-align: center;
 }
 
-.input-tips span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.input-tips strong {
+  color: var(--primary-color);
 }
 
+/* 响应式 */
 @media (max-width: 768px) {
   .message-input-container {
     padding: 12px 16px;
   }
   
   .input-wrapper {
-    padding: 10px 14px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  
+  .model-trigger-btn {
+    padding: 6px 10px;
+  }
+  
+  .model-trigger-btn .model-name {
+    display: none;
   }
   
   .message-input {
-    font-size: 16px; /* 防止iOS缩放 */
+    font-size: 16px;
   }
   
   .send-btn,
   .stop-btn {
     width: 36px;
     height: 36px;
+  }
+  
+  .model-menu {
+    min-width: 250px;
+    left: -10px;
   }
 }

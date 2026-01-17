@@ -2,16 +2,20 @@
  * 聊天Hook - 管理聊天状态和逻辑
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Message, ChatRequest } from '../types/chat';
+import { Message, ChatRequest, ModelInfo } from '../types/chat';
 import { sseService } from '../services/sseService';
+import { fetchModels } from '../services/api';
 
 interface UseChatReturn {
   messages: Message[];
   isLoading: boolean;
   error: string | null;
   sessionId: string | null;
+  models: ModelInfo[];
+  selectedModel: string;
+  setSelectedModel: (modelId: string) => void;
   sendMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
   stopGeneration: () => void;
@@ -22,9 +26,29 @@ export function useChat(): UseChatReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
   
   // 用于累积AI响应
   const assistantMessageRef = useRef<string>('');
+
+  // 初始化：获取可用模型列表
+  useEffect(() => {
+    const loadModels = async () => {
+      const modelList = await fetchModels();
+      setModels(modelList);
+      
+      // 设置默认选中的模型
+      const defaultModel = modelList.find(m => m.isDefault);
+      if (defaultModel) {
+        setSelectedModel(defaultModel.id);
+      } else if (modelList.length > 0) {
+        setSelectedModel(modelList[0].id);
+      }
+    };
+    
+    loadModels();
+  }, []);
 
   /**
    * 发送消息
@@ -62,6 +86,7 @@ export function useChat(): UseChatReturn {
       sessionId: sessionId || undefined,
       message: content.trim(),
       userId: 'anonymous',
+      modelId: selectedModel || undefined,
     };
 
     try {
@@ -107,7 +132,7 @@ export function useChat(): UseChatReturn {
       setError((err as Error).message);
       setIsLoading(false);
     }
-  }, [sessionId, isLoading]);
+  }, [sessionId, isLoading, selectedModel]);
 
   /**
    * 清空消息
@@ -141,6 +166,9 @@ export function useChat(): UseChatReturn {
     isLoading,
     error,
     sessionId,
+    models,
+    selectedModel,
+    setSelectedModel,
     sendMessage,
     clearMessages,
     stopGeneration,

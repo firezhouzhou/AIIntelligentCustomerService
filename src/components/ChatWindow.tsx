@@ -13,6 +13,9 @@ export function ChatWindow() {
     messages,
     isLoading,
     error,
+    models,
+    selectedModel,
+    setSelectedModel,
     sendMessage,
     clearMessages,
     stopGeneration,
@@ -22,7 +25,7 @@ export function ChatWindow() {
     <div className="chat-window">
       <Header 
         onClear={clearMessages} 
-        messageCount={messages.length} 
+        messageCount={messages.length}
       />
       
       {error && (
@@ -38,6 +41,9 @@ export function ChatWindow() {
         onSend={sendMessage} 
         isLoading={isLoading}
         onStop={stopGeneration}
+        models={models}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
       />
     </div>
   );

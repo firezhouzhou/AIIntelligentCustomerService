@@ -21,11 +21,20 @@ export interface ChatSession {
   lastActiveAt: Date;
 }
 
+// 模型信息
+export interface ModelInfo {
+  id: string;
+  name: string;
+  description: string;
+  isDefault: boolean;
+}
+
 // 聊天请求
 export interface ChatRequest {
   sessionId?: string;
   message: string;
   userId?: string;
+  modelId?: string;  // 选择的模型ID
 }
 
 // SSE响应
