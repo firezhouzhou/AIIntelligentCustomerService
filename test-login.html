@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.register {
+            background: #2196F3;
+        }
+        button.register:hover {
+            background: #0b7dda;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 登录功能测试页面</h1>
+        
+        <div class="form-group">
+            <label>API 基础地址:</label>
+            <input type="text" id="apiBase" value="http://localhost:8014/api">
+        </div>
+        
+        <div class="form-group">
+            <label>用户名:</label>
+            <input type="text" id="username" value="testuser" placeholder="请输入用户名">
+        </div>
+        
+        <div class="form-group">
+            <label>密码:</label>
+            <input type="password" id="password" value="123456" placeholder="请输入密码">
+        </div>
+        
+        <div class="form-group">
+            <label>邮箱 (仅注册需要):</label>
+            <input type="email" id="email" value="test@example.com" placeholder="请输入邮箱">
+        </div>
+        
+        <div class="form-group">
+            <button onclick="testRegister()">📝 测试注册</button>
+            <button onclick="testLogin()">🔑 测试登录</button>
+            <button onclick="checkToken()" style="background: #FF9800;">📊 检查Token</button>
+            <button onclick="clearStorage()" style="background: #f44336;">🗑️ 清除存储</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+        
+        <div style="margin-top: 30px;">
+            <h3>📋 测试步骤:</h3>
+            <ol>
+                <li>确保后端服务运行在 <code>http://localhost:8014</code></li>
+                <li>点击 "测试注册" 创建新用户（如果已有用户可跳过）</li>
+                <li>点击 "测试登录" 尝试登录</li>
+                <li>点击 "检查Token" 查看是否保存成功</li>
+                <li>如果成功，手动访问 <a href="http://localhost:5173/chapter_14" target="_blank">http://localhost:5173/chapter_14</a></li>
+            </ol>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <h3>🐛 常见问题:</h3>
+            <ul>
+                <li><strong>CORS 错误:</strong> 检查后端 CORS 配置</li>
+                <li><strong>连接失败:</strong> 确认后端是否启动</li>
+                <li><strong>401 错误:</strong> 用户名或密码错误</li>
+                <li><strong>500 错误:</strong> 后端服务异常，查看后端日志</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = () => document.getElementById('apiBase').value;
+        const resultDiv = document.getElementById('result');
+
+        function showResult(message, type = 'info') {
+            resultDiv.className = `result ${type}`;
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = message;
+        }
+
+        async function testRegister() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value;
+
+            if (!username || !password || !email) {
+                showResult('❌ 请填写所有字段', 'error');
+                return;
+            }
+
+            showResult('⏳ 注册中...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE()}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, email })
+                });
+
+                console.log('注册响应状态:', response.status, response.statusText);
+                
+                const result = await response.json();
+                console.log('注册结果:', result);
+
+                if (result.success) {
+                    showResult(`
+                        ✅ <strong>注册成功！</strong><br>
+                        用户名: ${username}<br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult(`
+                        ❌ <strong>注册失败</strong><br>
+                        ${result.message || '未知错误'}<br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                showResult(`
+                    ❌ <strong>请求失败</strong><br>
+                    ${error.message}<br>
+                    请检查:<br>
+                    1. 后端是否启动 (http://localhost:8014)<br>
+                    2. CORS 配置是否正确<br>
+                    3. 网络连接是否正常
+                `, 'error');
+            }
+        }
+
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showResult('❌ 请填写用户名和密码', 'error');
+                return;
+            }
+
+            showResult('⏳ 登录中...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE()}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                console.log('登录响应状态:', response.status, response.statusText);
+                
+                const result = await response.json();
+                console.log('登录结果:', result);
+
+                if (result.success && result.data && result.data.token) {
+                    // 保存 Token
+                    localStorage.setItem('chapter14_token', result.data.token);
+                    localStorage.setItem('chapter14_user', JSON.stringify({
+                        username: result.data.username,
+                        email: result.data.email,
+                        token: result.data.token
+                    }));
+
+                    showResult(`
+                        ✅ <strong>登录成功！Token 已保存</strong><br>
+                        用户名: ${result.data.username}<br>
+                        邮箱: ${result.data.email}<br>
+                        Token: ${result.data.token.substring(0, 30)}...<br><br>
+                        <strong>请访问:</strong> <a href="http://localhost:5173/chapter_14" target="_blank">http://localhost:5173/chapter_14</a><br><br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult(`
+                        ❌ <strong>登录失败</strong><br>
+                        ${result.message || '未知错误'}<br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                showResult(`
+                    ❌ <strong>请求失败</strong><br>
+                    ${error.message}<br>
+                    请检查:<br>
+                    1. 后端是否启动 (http://localhost:8014)<br>
+                    2. 用户是否已注册<br>
+                    3. 用户名和密码是否正确
+                `, 'error');
+            }
+        }
+
+        function checkToken() {
+            const token = localStorage.getItem('chapter14_token');
+            const user = localStorage.getItem('chapter14_user');
+
+            if (token) {
+                const userObj = user ? JSON.parse(user) : {};
+                showResult(`
+                    ✅ <strong>Token 存在</strong><br>
+                    Token: ${token.substring(0, 50)}...<br>
+                    用户信息:<br>
+                    <pre>${JSON.stringify(userObj, null, 2)}</pre><br>
+                    <strong>登录状态:</strong> 已登录 ✓<br><br>
+                    <a href="http://localhost:5173/chapter_14" target="_blank" style="font-size: 18px;">
+                        🚀 点击访问系统
+                    </a>
+                `, 'success');
+            } else {
+                showResult(`
+                    ❌ <strong>Token 不存在</strong><br>
+                    请先登录
+                `, 'error');
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('chapter14_token');
+            localStorage.removeItem('chapter14_user');
+            showResult('🗑️ <strong>存储已清除</strong><br>Token 和用户信息已删除', 'info');
+        }
+
+        // 页面加载时检查 Token
+        window.onload = () => {
+            const token = localStorage.getItem('chapter14_token');
+            if (token) {
+                console.log('检测到已登录状态');
+                showResult(`
+                    ℹ️ <strong>检测到登录状态</strong><br>
+                    Token: ${token.substring(0, 30)}...<br>
+                    点击 "检查Token" 查看详情
+                `, 'info');
+            }
+        };
+    </script>
+</body>
+</html>
