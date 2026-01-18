@@ -55,7 +55,7 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: var(--bg-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -64,9 +64,7 @@ body {
 #root {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  flex-direction: column;
 }
 
 /* 滚动条样式 */

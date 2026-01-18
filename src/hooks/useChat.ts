@@ -105,6 +105,20 @@ export function useChat(): UseChatReturn {
         },
         // onComplete - 完成
         (newSessionId) => {
+          if (!assistantMessageRef.current) {
+            const errorMessage = '未收到模型返回内容，请检查后端日志或模型配置。';
+            setError(errorMessage);
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: '抱歉，' + errorMessage, status: 'error' }
+                  : msg
+              )
+            );
+            setIsLoading(false);
+            return;
+          }
+          
           setSessionId(newSessionId);
           setMessages(prev => 
             prev.map(msg => 
