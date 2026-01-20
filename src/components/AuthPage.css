@@ -1,202 +1,564 @@
+/* ==================== 容器 ==================== */
 .auth-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: linear-gradient(135deg, #e0eaff 0%, #f0f4ff 50%, #e8f0ff 100%);
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ==================== 主包装器 ==================== */
+.auth-wrapper {
+  width: 100%;
+  max-width: 1080px;
+  min-height: 600px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 
+    0 8px 32px rgba(37, 99, 235, 0.15),
+    0 2px 8px rgba(37, 99, 235, 0.08);
+  display: flex;
+  overflow: hidden;
+  border: 3px solid rgba(37, 99, 235, 0.2);
+  animation: fadeIn 0.5s ease;
+}
+
+/* 反向布局（账号密码登录时） */
+.auth-wrapper.reverse-layout {
+  flex-direction: row-reverse !important;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==================== 左侧插画区域 ==================== */
+.auth-illustration {
+  flex: 1;
+  background: linear-gradient(135deg, #dbe7ff 0%, #e8f0ff 100%);
+  padding: 60px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-illustration::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  top: -100px;
+  left: -100px;
+}
+
+.illustration-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* 3D笔记本电脑插画 */
+.laptop-illustration {
+  width: 420px;
+  height: 320px;
+  position: relative;
+  perspective: 1200px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.laptop-screen {
+  width: 380px;
+  height: 240px;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  border-radius: 16px 16px 4px 4px;
+  position: relative;
+  transform: rotateX(5deg) rotateY(-5deg);
+  box-shadow: 
+    0 20px 60px rgba(37, 99, 235, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(59, 130, 246, 0.6);
+  overflow: hidden;
+}
+
+.laptop-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 14px;
+}
+
+.screen-content {
+  padding: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.chart-icon {
+  font-size: 48px;
+  text-align: center;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.data-lines {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.data-line {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.data-line:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.data-line:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.data-line:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.wave-chart {
+  width: 100%;
+  height: 80px;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80"><path d="M0 40 Q 30 10, 60 40 T 120 40 T 180 40 T 240 40 T 300 40" stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none"/><path d="M0 50 Q 30 60, 60 50 T 120 50 T 180 50 T 240 50 T 300 50" stroke="rgba(255,255,255,0.3)" stroke-width="2" fill="none"/></svg>') no-repeat center;
+  background-size: contain;
+  animation: wave 3s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.laptop-base {
+  width: 420px;
+  height: 12px;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+}
+
+.laptop-keyboard {
+  width: 440px;
+  height: 8px;
+  background: linear-gradient(135deg, #cbd5e1 0%, #e2e8f0 100%);
+  position: absolute;
+  bottom: 52px;
+  left: -10px;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: rotateX(60deg);
+}
+
+/* ==================== 右侧表单区域 ==================== */
+.auth-form-section {
+  flex: 1;
+  max-width: 480px;
+  padding: 60px 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+  min-height: 600px;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 420px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Header */
-.auth-header {
-  padding: 32px 32px 24px;
-  text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
+/* ==================== Logo ==================== */
 .auth-logo {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 24px;
 }
 
 .logo-icon {
-  font-size: 36px;
+  animation: rotate 20s linear infinite;
 }
 
-.logo-text {
-  font-size: 24px;
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==================== 标题 ==================== */
+.auth-title {
+  font-size: 28px;
   font-weight: 700;
+  color: #1a202c;
+  text-align: center;
+  margin: 0 0 32px 0;
+  letter-spacing: 1px;
 }
 
-.auth-subtitle {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-/* Tabs */
+/* ==================== Tab切换 ==================== */
 .auth-tabs {
   display: flex;
-  border-bottom: 1px solid #e0e0e0;
+  gap: 8px;
+  margin-bottom: 32px;
 }
 
 .auth-tab {
   flex: 1;
-  padding: 14px;
-  background: none;
+  padding: 12px 20px;
+  background: transparent;
   border: none;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
-  color: #666;
+  color: #64748b;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  border-radius: 8px;
   position: relative;
 }
 
 .auth-tab:hover {
-  color: #667eea;
-  background: #f5f7fa;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.05);
 }
 
 .auth-tab.active {
-  color: #667eea;
+  color: #2563eb;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .auth-tab.active::after {
   content: '';
   position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
   height: 3px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 3px 3px 0 0;
+  background: #2563eb;
+  border-radius: 2px 2px 0 0;
 }
 
-/* Form */
+/* ==================== Form ==================== */
 .auth-form {
-  padding: 24px 32px;
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
+/* ==================== Messages ==================== */
 .auth-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   padding: 12px 16px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .auth-message.error {
-  background: #fff5f5;
-  color: #c53030;
-  border: 1px solid #feb2b2;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .auth-message.success {
-  background: #f0fff4;
-  color: #276749;
-  border: 1px solid #9ae6b4;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
-.message-icon {
-  font-size: 16px;
-}
-
+/* ==================== Form Group ==================== */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+/* ==================== Input ==================== */
+.form-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a202c;
+  background: #ffffff;
+  transition: all 0.2s;
 }
 
-.input-wrapper {
+.form-input::placeholder {
+  color: #cbd5e1;
+}
+
+.form-input:hover {
+  border-color: #cbd5e1;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* 带链接的输入框 */
+.input-with-link {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.input-icon {
-  position: absolute;
-  left: 14px;
-  font-size: 16px;
-  z-index: 1;
+.input-with-link .form-input {
+  padding-right: 100px;
 }
 
-.input-wrapper input {
-  width: 100%;
-  padding: 12px 14px 12px 42px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 15px;
+.input-link {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
   transition: all 0.2s;
 }
 
-.input-wrapper input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.input-link:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
 }
 
-.input-wrapper input::placeholder {
-  color: #999;
+/* 带图标的输入框（眼睛图标） */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
-/* Submit Button */
-.auth-submit {
+.input-with-icon .form-input {
+  padding-right: 45px;
+}
+
+.input-icon-button {
+  position: absolute;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.input-icon-button:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+}
+
+/* ==================== Form Options ==================== */
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 24px;
+}
+
+/* 复选框 */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-icon {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #2563eb;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.checkbox-label input[type="checkbox"]:not(:checked) + .checkbox-icon {
+  background: transparent;
+  border-color: #cbd5e1;
+}
+
+.checkbox-text {
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* 用户协议样式 */
+.terms-label-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: row !important;
+  margin-bottom: 8px;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+}
+
+.terms-label-wrapper .checkbox-icon {
+  flex-shrink: 0 !important;
+  width: 18px;
+  height: 18px;
+}
+
+.terms-label-wrapper .checkbox-text {
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  flex-shrink: 0;
+  flex: 1;
+  display: inline;
+}
+
+.terms-link {
+  color: #2563eb;
+  text-decoration: none;
+  transition: color 0.2s;
+  white-space: nowrap;
+  display: inline;
+}
+
+.terms-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.forgot-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+/* ==================== Submit Button ==================== */
+.submit-button {
   width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  height: 48px;
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
+  letter-spacing: 4px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  margin-bottom: 20px;
 }
 
-.auth-submit:hover:not(:disabled) {
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-.auth-submit:disabled {
-  opacity: 0.7;
+.submit-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
+/* ==================== Spinner ==================== */
 .spinner {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.6s linear infinite;
 }
 
 @keyframes spin {
@@ -205,75 +567,97 @@
   }
 }
 
-/* Footer */
-.auth-footer {
-  padding: 0 32px 24px;
+/* ==================== 注册提示 ==================== */
+.register-hint {
   text-align: center;
-}
-
-.auth-footer p {
-  margin: 0;
   font-size: 14px;
-  color: #666;
+  color: #64748b;
 }
 
-.link-button {
+.register-link {
   background: none;
   border: none;
-  color: #667eea;
+  color: #2563eb;
   font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
   padding: 0;
-  margin-left: 4px;
+  transition: color 0.2s;
+  font-weight: 500;
 }
 
-.link-button:hover {
+.register-link:hover {
+  color: #1d4ed8;
   text-decoration: underline;
 }
 
-/* Features */
-.auth-features {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
+/* ==================== 响应式 ==================== */
+@media (max-width: 968px) {
+  .auth-wrapper {
+    flex-direction: column;
+    max-width: 500px;
+  }
+  
+  /* 移动端时取消反向布局 */
+  .auth-wrapper.reverse-layout {
+    flex-direction: column;
+  }
+  
+  .auth-illustration {
+    padding: 40px 20px;
+    min-height: 300px;
+  }
+  
+  .laptop-illustration {
+    transform: scale(0.7);
+  }
+  
+  .auth-form-section {
+    padding: 40px 32px;
+  }
 }
 
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #666;
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 10px;
+  }
+  
+  .auth-wrapper {
+    border-radius: 16px;
+  }
+  
+  .auth-illustration {
+    display: none;
+  }
+  
+  .auth-form-section {
+    max-width: 100%;
+    padding: 32px 24px;
+  }
+  
+  .auth-title {
+    font-size: 24px;
+  }
+  
+  .auth-tabs {
+    flex-direction: column;
+  }
+  
+  .auth-tab {
+    width: 100%;
+  }
 }
 
-.feature-icon {
-  font-size: 16px;
-}
-
-/* 响应式 */
-@media (max-width: 480px) {
-  .auth-card {
-    border-radius: 12px;
+/* ==================== Desktop 优化 ==================== */
+@media (min-width: 1200px) {
+  .auth-wrapper {
+    max-width: 1200px;
   }
   
-  .auth-header {
-    padding: 24px 20px 20px;
+  .auth-illustration {
+    padding: 80px 60px;
   }
   
-  .logo-text {
-    font-size: 20px;
-  }
-  
-  .auth-form {
-    padding: 20px;
-  }
-  
-  .auth-features {
-    flex-wrap: wrap;
-    gap: 12px;
+  .auth-form-section {
+    padding: 80px 70px;
   }
 }
