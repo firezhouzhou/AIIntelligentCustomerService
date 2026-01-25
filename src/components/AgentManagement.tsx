@@ -11,7 +11,7 @@ import {
 import './AgentManagement.css';
 
 interface AgentManagementProps {
-  onNavigate: (page: 'chat' | 'analytics') => void;
+  onNavigate: (page: 'chat' | 'analytics' | 'workspace') => void;
 }
 
 export default function AgentManagement({ onNavigate }: AgentManagementProps) {
@@ -156,6 +156,10 @@ export default function AgentManagement({ onNavigate }: AgentManagementProps) {
           <div className="nav-item" onClick={() => onNavigate('chat')}>
             <span className="nav-icon">💬</span>
             <span>智能对话</span>
+          </div>
+          <div className="nav-item" onClick={() => onNavigate('workspace')}>
+            <span className="nav-icon">🎧</span>
+            <span>客服工作台</span>
           </div>
           <div className="nav-item" onClick={() => onNavigate('analytics')}>
             <span className="nav-icon">📊</span>

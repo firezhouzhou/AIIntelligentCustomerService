@@ -12,7 +12,7 @@ import {
 import './AnalyticsDashboard.css';
 
 interface AnalyticsDashboardProps {
-  onNavigate: (page: 'chat' | 'agents') => void;
+  onNavigate: (page: 'chat' | 'agents' | 'workspace') => void;
 }
 
 export default function AnalyticsDashboard({ onNavigate }: AnalyticsDashboardProps) {
@@ -93,6 +93,10 @@ export default function AnalyticsDashboard({ onNavigate }: AnalyticsDashboardPro
           <div className="nav-item" onClick={() => onNavigate('chat')}>
             <span className="nav-icon">💬</span>
             <span>智能对话</span>
+          </div>
+          <div className="nav-item" onClick={() => onNavigate('workspace')}>
+            <span className="nav-icon">🎧</span>
+            <span>客服工作台</span>
           </div>
           <div className="nav-item active">
             <span className="nav-icon">📊</span>

@@ -11,8 +11,8 @@ const API_BASE = 'http://localhost:8015/api';
 export type MessageType = 'text' | 'image' | 'audio' | 'video' | 'file';
 
 // 会话状态枚举（兼容大小写）
-export type SessionStatus = 'WAITING' | 'BOT_SERVING' | 'AGENT_SERVING' | 'CLOSED' 
-  | 'waiting' | 'bot_serving' | 'agent_serving' | 'closed';
+export type SessionStatus = 'WAITING' | 'BOT_SERVING' | 'AGENT_SERVING' | 'CLOSED' | 'TRANSFERRING'
+  | 'waiting' | 'bot_serving' | 'agent_serving' | 'closed' | 'transferring';
 
 // 客服状态枚举
 export type AgentStatus = 'online' | 'offline' | 'busy' | 'away';
@@ -42,7 +42,7 @@ export interface SessionMessage {
   id: number;
   sessionId: string;
   messageType: MessageType;
-  senderType: 'user' | 'bot' | 'agent';
+  senderType: 'user' | 'bot' | 'agent' | 'system';
   senderId?: number;
   content: string;
   confidence?: number;
@@ -623,6 +623,139 @@ export const deleteAgent = async (id: number): Promise<ApiResponse<string>> => {
       code: 500,
       message: error instanceof Error ? error.message : '网络请求失败',
       data: '',
+      timestamp: Date.now()
+    };
+  }
+};
+
+// ============= 客服工作台接口 =============
+
+// 会话信息
+export interface CustomerSession {
+  id: number;
+  sessionId: string;
+  userId: number;
+  knowledgeBaseId: number;
+  status: SessionStatus;
+  agentId?: number;
+  messageCount: number;
+  botConfidence: number;
+  satisfactionScore?: number;
+  startTime: string;
+  endTime?: string;
+  lastActivityTime: string;
+}
+
+/**
+ * 获取等待人工处理的会话列表
+ */
+export const getWaitingSessions = async (): Promise<ApiResponse<CustomerSession[]>> => {
+  try {
+    const response = await fetch(`${API_BASE}/agent-workspace/sessions/waiting`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    return {
+      code: 500,
+      message: error instanceof Error ? error.message : '网络请求失败',
+      data: [],
+      timestamp: Date.now()
+    };
+  }
+};
+
+/**
+ * 获取客服的活跃会话列表
+ */
+export const getAgentActiveSessions = async (agentId: number): Promise<ApiResponse<CustomerSession[]>> => {
+  try {
+    const response = await fetch(`${API_BASE}/agent-workspace/sessions/agent/${agentId}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    return {
+      code: 500,
+      message: error instanceof Error ? error.message : '网络请求失败',
+      data: [],
+      timestamp: Date.now()
+    };
+  }
+};
+
+/**
+ * 获取所有活跃会话
+ */
+export const getAllActiveSessions = async (): Promise<ApiResponse<CustomerSession[]>> => {
+  try {
+    const response = await fetch(`${API_BASE}/agent-workspace/sessions/active`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    return {
+      code: 500,
+      message: error instanceof Error ? error.message : '网络请求失败',
+      data: [],
+      timestamp: Date.now()
+    };
+  }
+};
+
+/**
+ * 客服接入会话
+ */
+export const acceptSession = async (sessionId: string, agentId: number): Promise<ApiResponse<CustomerSession>> => {
+  try {
+    const response = await fetch(`${API_BASE}/agent-workspace/sessions/${sessionId}/accept?agentId=${agentId}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    return {
+      code: 500,
+      message: error instanceof Error ? error.message : '网络请求失败',
+      data: {} as CustomerSession,
+      timestamp: Date.now()
+    };
+  }
+};
+
+/**
+ * 获取会话详情
+ */
+export const getSessionDetail = async (sessionId: string): Promise<ApiResponse<CustomerSession>> => {
+  try {
+    const response = await fetch(`${API_BASE}/agent-workspace/sessions/${sessionId}`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    return {
+      code: 500,
+      message: error instanceof Error ? error.message : '网络请求失败',
+      data: {} as CustomerSession,
+      timestamp: Date.now()
+    };
+  }
+};
+
+/**
+ * 获取会话消息历史（工作台专用）
+ */
+export const getWorkspaceSessionMessages = async (sessionId: string): Promise<ApiResponse<SessionMessage[]>> => {
+  try {
+    const response = await fetch(`${API_BASE}/agent-workspace/sessions/${sessionId}/messages`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  } catch (error) {
+    return {
+      code: 500,
+      message: error instanceof Error ? error.message : '网络请求失败',
+      data: [],
       timestamp: Date.now()
     };
   }

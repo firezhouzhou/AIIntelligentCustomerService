@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // 为 sockjs-client 提供 global 变量兼容
+    global: 'globalThis',
+  },
   server: {
     port: 5173,
     proxy: {
@@ -12,21 +16,12 @@ export default defineConfig({
         target: 'http://localhost:8089',
         changeOrigin: true,
       },
-      // Chapter 15 - 多模态智能客服平台API (端口8015)
-      // 注意：chapter15Service.ts 中使用完整URL直接请求8015端口
-      // 如需通过代理，可配置如下：
-      // '/api/multimodal-chat': {
-      //   target: 'http://localhost:8015',
-      //   changeOrigin: true,
-      // },
-      // '/api/analytics': {
-      //   target: 'http://localhost:8015',
-      //   changeOrigin: true,
-      // },
-      // '/api/agents': {
-      //   target: 'http://localhost:8015',
-      //   changeOrigin: true,
-      // }
+      // Chapter 15 WebSocket 代理
+      '/ws': {
+        target: 'http://localhost:8015',
+        changeOrigin: true,
+        ws: true,  // 启用 WebSocket 代理
+      },
     }
   }
 })

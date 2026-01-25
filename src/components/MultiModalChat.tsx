@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -6,19 +6,18 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   sendMessage,
-  getSessionMessages,
   transferToAgent,
   closeSession,
   MessageRequest,
-  SessionMessage,
   MessageType,
   SessionStatus,
 } from '../services/chapter15Service';
+import wsService, { WsMessage, StatusChangeNotification } from '../services/websocketService';
 import './MultiModalChat.css';
 
 interface Message {
   id: string;
-  role: 'user' | 'bot' | 'agent';
+  role: 'user' | 'bot' | 'agent' | 'system';
   content: string;
   timestamp: Date;
   messageType: MessageType;
@@ -27,7 +26,7 @@ interface Message {
 }
 
 interface MultiModalChatProps {
-  onNavigate: (page: 'analytics' | 'agents') => void;
+  onNavigate: (page: 'analytics' | 'agents' | 'workspace') => void;
 }
 
 export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
@@ -45,52 +44,170 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
   const [dislikedIds, setDislikedIds] = useState<Set<string>>(new Set());
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [rating, setRating] = useState(5);
+  const [wsConnected, setWsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const wsConnectedRef = useRef<boolean>(false);
+  const subscribedSessionRef = useRef<string | null>(null);
 
   // 自动滚动到底部
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 加载历史消息
-  const loadHistory = async (sid: string) => {
-    try {
-      const result = await getSessionMessages(sid);
-      if (result.code === 200 && result.data) {
-        const historyMessages: Message[] = result.data.map((msg: SessionMessage) => ({
-          id: msg.id.toString(),
-          role: msg.senderType,
-          content: msg.content,
-          timestamp: new Date(msg.createdTime),
-          messageType: msg.messageType,
-          confidence: msg.confidence,
-          fromRag: msg.fromRag,
-        }));
-        setMessages(historyMessages);
-      }
-    } catch (err) {
-      console.error('加载历史消息失败:', err);
+  // 处理收到的 WebSocket 消息
+  const handleWsMessage = useCallback((wsMsg: WsMessage) => {
+    console.log('收到 WebSocket 消息:', wsMsg);
+    
+    // 转换消息格式
+    let role: Message['role'] = 'bot';
+    if (wsMsg.senderType === 'user') role = 'user';
+    else if (wsMsg.senderType === 'agent') role = 'agent';
+    else if (wsMsg.senderType === 'system') role = 'system';
+
+    const newMessage: Message = {
+      id: `ws-${wsMsg.id || Date.now()}`,
+      role,
+      content: wsMsg.content,
+      timestamp: new Date(wsMsg.timestamp),
+      messageType: (wsMsg.messageType as MessageType) || 'text',
+      confidence: wsMsg.confidence,
+      fromRag: wsMsg.fromRag,
+    };
+
+    // 避免重复消息（用户自己发送的消息）
+    setMessages((prev) => {
+      // 检查是否已存在相同消息
+      const exists = prev.some(m => 
+        m.content === newMessage.content && 
+        m.role === newMessage.role &&
+        Math.abs(m.timestamp.getTime() - newMessage.timestamp.getTime()) < 5000
+      );
+      if (exists) return prev;
+      return [...prev, newMessage];
+    });
+  }, []);
+
+  // 处理会话状态变更
+  const handleStatusChange = useCallback((notification: StatusChangeNotification) => {
+    console.log('会话状态变更:', notification);
+    if (notification.status) {
+      setSessionStatus(notification.status as SessionStatus);
     }
-  };
+    if (notification.agentName) {
+      // 添加系统消息
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `status-${Date.now()}`,
+          role: 'system',
+          content: `已为您转接人工客服：${notification.agentName}`,
+          timestamp: new Date(),
+          messageType: 'text',
+        },
+      ]);
+    }
+  }, []);
+
+  // WebSocket 连接和订阅管理
+  useEffect(() => {
+    const shouldUseWs = sessionId && 
+      (sessionStatus?.toLowerCase() === 'agent_serving' || 
+       sessionStatus?.toLowerCase() === 'transferring' ||
+       sessionStatus?.toLowerCase() === 'waiting');
+
+    if (shouldUseWs && sessionId) {
+      // 连接 WebSocket
+      if (!wsConnectedRef.current) {
+        wsService.connect(
+          () => {
+            console.log('WebSocket 连接成功');
+            wsConnectedRef.current = true;
+            setWsConnected(true);
+            
+            // 订阅会话消息
+            if (sessionId && subscribedSessionRef.current !== sessionId) {
+              wsService.subscribeToSession(sessionId, handleWsMessage);
+              wsService.subscribeToSessionStatus(sessionId, handleStatusChange);
+              subscribedSessionRef.current = sessionId;
+            }
+          },
+          (error) => {
+            console.error('WebSocket 连接失败:', error);
+            wsConnectedRef.current = false;
+            setWsConnected(false);
+            setError('实时通信连接失败，请刷新页面重试');
+          }
+        );
+      } else if (subscribedSessionRef.current !== sessionId) {
+        // 已连接但未订阅当前会话
+        wsService.subscribeToSession(sessionId, handleWsMessage);
+        wsService.subscribeToSessionStatus(sessionId, handleStatusChange);
+        subscribedSessionRef.current = sessionId;
+      }
+    }
+
+    return () => {
+      // 组件卸载时断开连接
+      // 注意：这里不断开，因为可能切换页面后还需要使用
+    };
+  }, [sessionId, sessionStatus, handleWsMessage, handleStatusChange]);
+
+  // 组件卸载时清理
+  useEffect(() => {
+    return () => {
+      if (subscribedSessionRef.current) {
+        wsService.unsubscribeFromSession(subscribedSessionRef.current);
+        subscribedSessionRef.current = null;
+      }
+      wsService.disconnect();
+      wsConnectedRef.current = false;
+    };
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
+    const userContent = input.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: userContent,
       timestamp: new Date(),
       messageType: messageType,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
     setInput('');
-    setLoading(true);
     setError('');
 
-    // 添加助手的占位消息
+    // 判断是否处于人工客服服务状态
+    const isAgentMode = sessionStatus?.toLowerCase() === 'agent_serving';
+    
+    // 人工客服模式：使用 WebSocket 发送消息
+    if (isAgentMode && sessionId && wsConnectedRef.current) {
+      // 先显示用户消息
+      setMessages((prev) => [...prev, userMessage]);
+      
+      // 通过 WebSocket 发送
+      wsService.sendUserMessage(
+        sessionId,
+        1, // userId
+        userContent,
+        messageType,
+        showMediaInput && mediaUrl ? mediaUrl : undefined
+      );
+      
+      setMessageType('text');
+      setMediaUrl('');
+      setShowMediaInput(false);
+      return;
+    }
+
+    // 机器人模式：使用 HTTP API
+    setMessages((prev) => [...prev, userMessage]);
+    setLoading(true);
+    
+    // 添加助手占位消息
     const assistantMsgId = (Date.now() + 1).toString();
     setMessages((prev) => [
       ...prev,
@@ -108,7 +225,7 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
         sessionId: sessionId || undefined,
         userId: 1, // 默认用户ID
         knowledgeBaseId: 1, // 默认知识库ID
-        content: userMessage.content,
+        content: userContent,
         messageType: messageType,
         mediaUrl: showMediaInput && mediaUrl ? mediaUrl : undefined,
       };
@@ -126,12 +243,11 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
           setSessionStatus(responseData.status as SessionStatus);
         }
 
-        // 获取回答内容，确保不是 null 或 undefined
+        // 机器人模式：获取回答内容并更新占位消息
         const answerContent = responseData.answer || '抱歉，未能获取到回答内容。';
         const confidenceValue = responseData.confidence;
         const fromRagValue = responseData.fromRag ?? false;
         
-        // 更新消息状态
         setMessages((prevMessages) => {
           const newMessages: Message[] = [];
           
@@ -201,17 +317,47 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
       });
 
       if (result.code === 200 && result.data) {
-        setSessionStatus('AGENT_SERVING');
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            role: 'bot',
-            content: `已为您转接人工客服：${result.data.agentName || '客服'}，请稍候...`,
-            timestamp: new Date(),
-            messageType: 'text',
-          },
-        ]);
+        // 根据后端返回的路由结果设置状态
+        const routeTo = result.data.routeTo;
+        if (routeTo === 'agent') {
+          setSessionStatus('AGENT_SERVING');
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              role: 'system',
+              content: `已为您转接人工客服：${result.data.agentName || '客服'}，请稍候...`,
+              timestamp: new Date(),
+              messageType: 'text',
+            },
+          ]);
+        } else if (routeTo === 'queue') {
+          setSessionStatus('WAITING');
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              role: 'system',
+              content: '当前客服繁忙，您已进入等待队列，请稍候...',
+              timestamp: new Date(),
+              messageType: 'text',
+            },
+          ]);
+        } else {
+          // 默认设置为转接中状态
+          setSessionStatus('TRANSFERRING');
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              role: 'system',
+              content: '正在为您转接人工客服，请稍候...',
+              timestamp: new Date(),
+              messageType: 'text',
+            },
+          ]);
+        }
+        // WebSocket 会在 useEffect 中自动连接和订阅
       } else {
         setError(result.message || '转接失败');
       }
@@ -256,6 +402,12 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
   };
 
   const clearChat = () => {
+    // 清理 WebSocket 订阅
+    if (subscribedSessionRef.current) {
+      wsService.unsubscribeFromSession(subscribedSessionRef.current);
+      subscribedSessionRef.current = null;
+    }
+    
     setMessages([]);
     setSessionId(null);
     setSessionStatus('BOT_SERVING');
@@ -338,6 +490,8 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
         return '🤖';
       case 'agent':
         return '👨‍💼';
+      case 'system':
+        return '📢';
       default:
         return '💬';
     }
@@ -355,6 +509,10 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
           <div className="nav-item active">
             <span className="nav-icon">💬</span>
             <span>智能对话</span>
+          </div>
+          <div className="nav-item" onClick={() => onNavigate('workspace')}>
+            <span className="nav-icon">🎧</span>
+            <span>客服工作台</span>
           </div>
           <div className="nav-item" onClick={() => onNavigate('analytics')}>
             <span className="nav-icon">📊</span>
@@ -376,6 +534,14 @@ export default function MultiModalChat({ onNavigate }: MultiModalChatProps) {
             <div className="session-info">
               <span className="info-label">会话ID:</span>
               <span className="info-value">{sessionId.slice(0, 12)}...</span>
+            </div>
+          )}
+          {(sessionStatus?.toLowerCase() === 'agent_serving' || 
+            sessionStatus?.toLowerCase() === 'waiting' ||
+            sessionStatus?.toLowerCase() === 'transferring') && (
+            <div className={`ws-status ${wsConnected ? 'connected' : 'disconnected'}`}>
+              <span className="ws-dot"></span>
+              <span>{wsConnected ? '实时连接' : '连接中...'}</span>
             </div>
           )}
         </div>

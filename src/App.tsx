@@ -8,6 +8,7 @@ import KnowledgeBase from './components/KnowledgeBase'
 import MultiModalChat from './components/MultiModalChat'
 import AgentManagement from './components/AgentManagement'
 import AnalyticsDashboard from './components/AnalyticsDashboard'
+import AgentWorkspace from './components/AgentWorkspace'
 import ProtectedRoute from './components/ProtectedRoute'
 import { isLoggedIn, logout, getStoredUser } from './services/chapter14Service'
 import './App.css'
@@ -162,6 +163,14 @@ function App() {
             path="/chapter_15/agents" 
             element={
               <AgentManagement 
+                onNavigate={(page) => navigate(page === 'chat' ? '/chapter_15' : `/chapter_15/${page}`)} 
+              />
+            } 
+          />
+          <Route 
+            path="/chapter_15/workspace" 
+            element={
+              <AgentWorkspace 
                 onNavigate={(page) => navigate(page === 'chat' ? '/chapter_15' : `/chapter_15/${page}`)} 
               />
             } 
