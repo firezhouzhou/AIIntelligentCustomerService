@@ -5,6 +5,9 @@ import ContextAwareChat from './components/ContextAwareChat'
 import AuthPage from './components/AuthPage'
 import KnowledgeChat from './components/KnowledgeChat'
 import KnowledgeBase from './components/KnowledgeBase'
+import MultiModalChat from './components/MultiModalChat'
+import AgentManagement from './components/AgentManagement'
+import AnalyticsDashboard from './components/AnalyticsDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
 import { isLoggedIn, logout, getStoredUser } from './services/chapter14Service'
 import './App.css'
@@ -49,6 +52,8 @@ function App() {
 
   // 判断当前是否在 chapter14 页面
   const isChapter14Page = location.pathname.startsWith('/chapter_14');
+  // 判断当前是否在 chapter15 页面
+  const isChapter15Page = location.pathname.startsWith('/chapter_15');
 
   return (
     <div className="app">
@@ -82,6 +87,14 @@ function App() {
             <span className="tab-icon">📚</span>
             第14章 - 知识库RAG
             <span className="tab-port">:8014</span>
+          </button>
+          <button 
+            className={`nav-tab ${isChapter15Page ? 'active' : ''}`}
+            onClick={() => navigate('/chapter_15')}
+          >
+            <span className="tab-icon">🎯</span>
+            第15章 - 多模态客服
+            <span className="tab-port">:8015</span>
           </button>
         </div>
         {/* 用户信息区域 */}
@@ -125,6 +138,32 @@ function App() {
               <ProtectedRoute>
                 <KnowledgeBase onBackToChat={() => navigate('/chapter_14')} />
               </ProtectedRoute>
+            } 
+          />
+          
+          {/* 第15章 - 多模态智能客服平台 */}
+          <Route 
+            path="/chapter_15" 
+            element={
+              <MultiModalChat 
+                onNavigate={(page) => navigate(`/chapter_15/${page}`)} 
+              />
+            } 
+          />
+          <Route 
+            path="/chapter_15/analytics" 
+            element={
+              <AnalyticsDashboard 
+                onNavigate={(page) => navigate(page === 'chat' ? '/chapter_15' : `/chapter_15/${page}`)} 
+              />
+            } 
+          />
+          <Route 
+            path="/chapter_15/agents" 
+            element={
+              <AgentManagement 
+                onNavigate={(page) => navigate(page === 'chat' ? '/chapter_15' : `/chapter_15/${page}`)} 
+              />
             } 
           />
           
